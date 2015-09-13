@@ -7,4 +7,5 @@
   :depends-on (#:cl-charms)
   :serial t
   :components ((:file "package")
+               (:file "ui")
                (:file "drogue")))
