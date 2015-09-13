@@ -3,4 +3,6 @@
 (defpackage #:drogue
   (:use #:cl
         #:cl-charms)
-  (:export :main))
+  (:export :main
+           :render-ui
+           :process-input))

@@ -3,24 +3,24 @@
 (in-package #:drogue)
 
 ;;<ui>
-;;draw, handle-input
+;;render-ui, process-input
 (defclass <ui> ()
   ((message :type string
             :initarg :message
             :initform "this is the defualt message"))
   (:documentation
    "a parent ui class that holds data about the active ui.
-they are held in a global stack called *ui-stack*.
 the message slot can be rendered to put diagnostic info to the screen"))
 
-(defgeneric draw (<ui>)
+(defgeneric render-ui (<ui> game)
   (:documentation "draw the current ui (whatever it's type is)"))
-(defmethod draw (<ui>)
+
+(defmethod render-ui (<ui> game)
   "the defualt way to draw a ui is to render it's message slot to the screen..
 eventually this could take params like 'is-bordered' or something"
   (render-string (message <ui>)))
 
-(defgeneric handle-input (<ui> input)
+(defgeneric process-input (<ui> input game)
   (:documentation "called once per loop. switch-case on the user's input
  appropriately.  (eg, pressing i on the play screen is different than
  pressing i on the inventory screen)"))
@@ -33,15 +33,15 @@ eventually this could take params like 'is-bordered' or something"
   ((message :initform "press any key to play the game, or press q to quit"
             :type string
             :reader message)))
-(defmethod draw ((<ui> <play>))
+(defmethod render-ui ((<ui> <play>) game)
   "i guess all of the views are going to draw various aspects of the Game.
 the play screen will probably end up being interested in map"
   (render-string "i render the map" :x 7 :y 8 ))
-(defmethod handle-input ((<ui> <play>) input)
+(defmethod process-input ((<ui> <play>) input game)
   (case input
     ((#\q) (switch-ui *quit*))
     ((#\i) (switch-ui *inventory*))
-    (otherwise (render-string
+    (otherwie (render-string
                 (format nil "the time is ~A" *time*)
                 :x (random 10) :y (random 10)))))
 
@@ -52,7 +52,7 @@ the play screen will probably end up being interested in map"
   ((message :initform "this is the start ui.  press 'e' to start playing"
             :type string
             :reader message)))
-(defmethod handle-input ((<ui> <start>) input)
+(defmethod process-input ((<ui> <start>) input game)
   (when (eq input #\e)
     (switch-ui *play*)))
 
@@ -65,9 +65,8 @@ the play screen will probably end up being interested in map"
   (:documentation "should the inventory be a part of 'world',
 or should it be a field in here?
 storing state in here seems like a bad idea" ))
-(defmethod handle-input ((<ui> <inventory>) input)
+(defmethod process-input ((<ui> <inventory>) input game)
  (case input
-    ((#\^[) (render-string "you look in your inventory" :x 50 :y 4))
     ((#\q) (switch-ui *play*))
     (otherwise (render-string (format nil "~A" input)))))
 
@@ -76,9 +75,9 @@ storing state in here seems like a bad idea" ))
   ((message :initform "press any key to exit"
             :type string
             :reader message)))
-(defmethod handle-input ((<ui> <quit>) input)
+(defmethod process-input ((<ui> <quit>) input game)
   (when input
     (exit-game)))
 
-;;externs called in here:  switch-ui , render-string, and exit ..  none of these
+;;externs called in here: switch-ui render-string, and exit ..  none of these
 ;; can know about *stanwin* or any of that...
