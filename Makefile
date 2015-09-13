@@ -2,7 +2,7 @@ all:
 	buildapp \
 		--manifest-file manifest.txt \
 		--load-system drogue \
-		--output output \
+		--output out \
 		--entry drogue:main\
 		--compress-core
 	
