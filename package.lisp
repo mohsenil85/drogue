@@ -1,5 +1,6 @@
 ;;;; package.lisp
 
 (defpackage #:drogue
-  (:use #:cl))
-
+  (:use #:cl
+        #:cl-charms)
+  (:export :main))

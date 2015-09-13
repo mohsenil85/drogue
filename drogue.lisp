@@ -8,7 +8,9 @@
             :initarg :message
             :initform "this is the defualt message"))
   (:documentation
-   "a parent ui class that holds data about the active ui. they are held in a global stack called *ui-stack*.  the message slot can be rendered to put diagnostic info to the screen"))
+   "a parent ui class that holds data about the active ui.
+they are held in a global stack called *ui-stack*.
+the message slot can be rendered to put diagnostic info to the screen"))
 
 (defclass <play> (<ui>)
   ((message :initform "press any key to play the game, or press q to quit"
@@ -23,7 +25,9 @@
   ((message :initform "this is the inventory view"
             :type string
             :reader message))
-  (:documentation "should the inventory be a part of 'world', or should it be a field in here?  storing state in here seems like a bad idea" ))
+  (:documentation "should the inventory be a part of 'world',
+or should it be a field in here?
+storing state in here seems like a bad idea" ))
 (defclass <quit> (<ui>)
   ((message :initform "press any key to exit"
             :type string
@@ -38,11 +42,14 @@
 eventually this could take params like 'is-bordered' or something"
   (render-string (message <ui>)))
 (defmethod draw ((<ui> <play>))
-  "i guess all of the views are going to draw various aspects of the Game.  the play screen will probably end up being interested in map"
+  "i guess all of the views are going to draw various aspects of the Game.
+the play screen will probably end up being interested in map"
   (render-string "i render the map" :x 7 :y 8 ))
 
 (defgeneric handle-input (<ui> input)
-  (:documentation "called once per loop. switch-case on the user's input appropriately.  (eg, pressing i on the play screen is different than pressing i on the inventory screen)"))
+  (:documentation "called once per loop. switch-case on the user's input
+ appropriately.  (eg, pressing i on the play screen is different than
+ pressing i on the inventory screen)"))
 (defmethod handle-input ((<ui> <start>) input)
   (when (eq input #\e)
     (switch-ui *play*)))
