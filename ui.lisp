@@ -19,6 +19,10 @@ the message slot can be rendered to put diagnostic info to the screen"))
   "the defualt way to draw a ui is to render it's message slot to the screen..
 eventually this could take params like 'is-bordered' or something"
   (render-string (message <ui>)))
+(defmethod render-ui :before (<ui> game)
+  "sometimes we might not want this to run?"
+  (clear-window *standard-window*)
+  (switch-ui (ui game)))
 
 (defgeneric process-input (<ui> input game)
   (:documentation "called once per loop. switch-case on the user's input
@@ -26,24 +30,33 @@ eventually this could take params like 'is-bordered' or something"
  pressing i on the inventory screen)"))
 
 
+(defmethod process-input :before (<ui> input game)
+  t
+  )
 
 
 ;;<play>
 (defclass <play> (<ui>)
   ((message :initform "press any key to play the game, or press q to quit"
             :type string
-            :reader message)))
+            :reader message)
+   (ui-elements :initform '()
+                :type cons
+                :accessor ui-elements)))
 (defmethod render-ui ((<ui> <play>) game)
   "i guess all of the views are going to draw various aspects of the Game.
 the play screen will probably end up being interested in map"
+  ;(render-string (format t "reading world state:... ~A" (ticks game)))
   (render-string "i render the map" :x 7 :y 8 ))
+;(draw-map (world-map game)) ;;soon
+
 (defmethod process-input ((<ui> <play>) input game)
   (case input
     ((#\q) (switch-ui *quit*))
     ((#\i) (switch-ui *inventory*))
-    (otherwie (render-string
-                (format nil "the time is ~A" *time*)
-                :x (random 10) :y (random 10)))))
+    (otherwise (render-string
+               (format nil "the time is ~A" (ticks game))
+               :x (random 10) :y (random 10)))))
 
 
 
@@ -66,7 +79,7 @@ the play screen will probably end up being interested in map"
 or should it be a field in here?
 storing state in here seems like a bad idea" ))
 (defmethod process-input ((<ui> <inventory>) input game)
- (case input
+  (case input
     ((#\q) (switch-ui *play*))
     (otherwise (render-string (format nil "~A" input)))))
 

@@ -4,7 +4,7 @@ all:
 		--load-system drogue \
 		--output out \
 		--entry drogue:main\
-		--compress-core
+		#--compress-core
 
 clean:
 	rm *.fasl out
