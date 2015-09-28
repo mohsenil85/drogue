@@ -6,6 +6,4 @@
   :license "Specify license here"
   :depends-on (#:cl-charms)
   :serial t
-  :components ((:file "package")
-               (:file "ui")
-               (:file "drogue")))
+  :components ((:file "drogue")))
