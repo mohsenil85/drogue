@@ -7,13 +7,18 @@
 (in-package #:drogue)
 
 ;;stuff in the namespace
-(defvar *game* nil)
-(defvar *current-ui* nil)
+(defparameter *game* nil)
+(defparameter *current-ui* nil)
+(defvar *height* 25)
+(defvar *width* 80)
 
 
 ;;clostery
 
-(defclass <game> ()())
+(defclass <game> ()
+  ((ticks :initform 0
+         :type number
+         :accessor ticks)))
 
 (defclass <ui> ()())
 (defclass <play> (<ui>)())
@@ -25,18 +30,25 @@
                  :y (random 10)))
 
 (defmethod render-ui ((<play> <ui>) <game>)
-  (render-string "i am the play ui"
-                 :x (random 10)
-                 :y (random 10)))
+    (progn
+      (render-string "#" :x *width* :y *height* )
+      (render-string (format nil "GAME TIME: ~A" (ticks <game>)) :x 5 :y 5 )
+      (render-string "i am the play ui q to quit f to incf game-time"
+                  :x 0
+                  :y 0)))
 
 (defmethod process-input ((<play> <ui>) <game> input)
   (case input
     ((#\q) (quit-game))
+    ((#\f) (update-game <game> ))
+    ((#\c) (render-string-center "this should be centered"))
     (otherwise (render-string
                 "i am the ihnput handler"
                 :x (random 10)
                 :y (random 10)))))
 
+(defmethod update-game (<game>)
+  (incf (ticks <game>)))
 
 
 ;;cl-charms wrappers
@@ -49,6 +61,13 @@
 
 (defun render-string (string &key (x 0) (y 0))
   (write-string-at-point (standard-window) string x y))
+
+(defun render-string-center (string)
+  (let ((y (floor (/ *height* 2)))
+        (x (-
+            (floor (/ *width* 2))
+            (floor (/ (length string) 2)))))
+    (render-string string :x x :y y)))
 
 
 ;;game-wide stuff
