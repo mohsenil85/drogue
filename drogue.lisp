@@ -6,13 +6,6 @@
 
 (in-package #:drogue)
 
-;;stuff in the namespace
-(defparameter *game* nil)
-(defparameter *current-ui* nil)
-(defvar *height* 25)
-(defvar *width* 80)
-
-
 ;;clostery
 
 (defclass <game> ()
@@ -21,10 +14,20 @@
          :accessor ticks)))
 
 (defclass <ui> ()())
+(defclass <start> (<ui>)())
 (defclass <play> (<ui>)())
 (defclass <win> (<ui>)())
 (defclass <lose> (<ui>)())
-(defmethod render-ui (<ui> <game>)
+
+(defmethod render-ui :around((<play> <ui>) <game>)
+  (clear-window (standard-window)))
+
+;; (defmethod render-ui (<ui> <game>)
+;;   (render-string "fobboob"
+;;                  :x (random 10)
+;;                  :y (random 10)))
+
+(defmethod render-ui ((<play> <ui>) <game>)
   (render-string "fobboob"
                  :x (random 10)
                  :y (random 10)))
@@ -37,6 +40,16 @@
                   :x 0
                   :y 0)))
 
+(defmethod render-ui ((<start> <ui>) <game>)
+  (render-string-center "You awake in a quiet place..."))
+
+(defmethod render-ui :after ( <ui> <game>)
+  (move-cursor (standard-window) (1- *width*) (1- *height*)))
+
+
+(defmethod process-input ((<start> <ui>) <game> input)
+  (when input
+    (switch-ui *play* <game>)))
 (defmethod process-input ((<play> <ui>) <game> input)
   (case input
     ((#\q) (quit-game))
@@ -47,6 +60,9 @@
                 :x (random 10)
                 :y (random 10)))))
 
+(defmethod switch-ui (<ui> <game>)
+  (setf *current-ui* <ui>)
+  (render-ui <ui> <game>))
 (defmethod update-game (<game>)
   (incf (ticks <game>)))
 
@@ -70,6 +86,16 @@
     (render-string string :x x :y y)))
 
 
+;;stuff in the namespace
+(defparameter *game* nil)
+(defparameter *current-ui* nil)
+(defvar *height* 25)
+(defvar *width* 80)
+
+(defvar *play* (make-instance '<play>))
+(defvar *start* (make-instance '<start>))
+
+
 ;;game-wide stuff
 
 (defun run-game (ui game input)
@@ -80,7 +106,9 @@
   (disable-echoing)
   (enable-raw-input :interpret-control-characters t)
   (setf *game* (make-instance '<game>))
-  (setf *current-ui* (make-instance '<play>)))
+  (setf *current-ui* *start*)
+  (render-ui *current-ui* *game*)
+  )
 
 (defun main (args)
   (declare (ignore args))
