@@ -1,11 +1,13 @@
-all:
+all: manifest
 	buildapp \
-		--manifest-file manifest.txt \
+		--manifest-file manifest \
 		--load-system drogue \
 		--output out \
-		--entry drogue:main\
-		#--compress-core
+		--entry drogue:main \
+
+manifest:
+	sbcl --eval '(ql:write-asdf-manifest-file "manifest" )' \
+	--eval '(quit)'
 
 clean:
-	rm *.fasl out
-	
+	rm *.fasl out manifest
