@@ -26,12 +26,11 @@
 (defun write-at-center (string)
   (let* ((center-x (floor *width* 2))
          (center-y (floor *height* 2))
-         (normal-x (- center-x (length string) )))
+         (normal-x (- center-x (floor (length string) 2) )))
     (write-string-at-point (standard-window)
                            string
                            normal-x
-                           center-y
-                           )))
+                           center-y)))
 
 (defun game-loop ()
   (with-curses ()
@@ -47,7 +46,7 @@
        :do (progn
              (refresh-window (standard-window))
              (incf *ticks*)
-             (write-at-center "foo")
+             (write-at-center "you awake in a quiet place...")
              ))))
 
 
@@ -55,3 +54,10 @@
   (declare (ignore args))
   (game-loop)
   )
+
+;; (defui start-screen (world)
+;;   :ui ;;output
+;;   :keymap ;;input
+;;   :cursor
+;;   :next ;;that way q in the keymap always can be just go-next
+;;   )
