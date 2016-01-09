@@ -4,6 +4,7 @@ all: manifest
 		--load-system drogue \
 		--output out \
 		--entry drogue:main \
+		--compress-core \
 
 manifest:
 	sbcl --eval '(ql:write-asdf-manifest-file "manifest" )' \
