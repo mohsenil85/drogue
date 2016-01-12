@@ -1,6 +1,7 @@
 all: manifest
 	buildapp \
 		--manifest-file manifest \
+		--load-system swank \
 		--load-system drogue \
 		--output out \
 		--entry drogue:main \

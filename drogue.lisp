@@ -1,85 +1,88 @@
 ;;;; drogue.lisp
 (defpackage #:drogue
   (:use #:cl
-        #:cl-charms
-        #:omens)
+        #:termbox
+        #:swank)
   (:export :main))
 
 (in-package #:drogue)
 
-;;min window size ensurer
-;;defui
-;;;keymaps
-;;;callbacks
-;;;;start with inventory ui
-;;;;also world state object
-;;;need printing fns like print-center
+(defstruct keypress  
+  type mod ch key)
 
-(defstruct world width height ticks)
-(defparameter *world* (make-world :width 0 :height 0 :ticks 0))
+(defmacro log-debug (msg)
+  `(with-open-file  (logfile "mylog.log"
+                        :if-exists :supersede
+                        :direction :output )
+    (format logfile "~a~%" ,msg)) )   
 
-(defun init-world (world)
-  (multiple-value-bind (w h) (window-dimensions (standard-window))
-    (setf (world-ticks world) 0)
-    (setf (world-height world) h)
-    (setf (world-width world) w)))
+(defun event->keypress (event)
+  (let ((type (nth 1 event))
+        (mod (nth 3 event))
+        (ch (nth 5 event))
+        (key (nth 7 event)))
+    (make-keypress :type type
+                   :mod mod
+                   :ch ch
+                   :key key)))
+(defun event-char (event)
+  (let ((c (nth 5 event))
+        (mod (nth 7 event)))
+    (case mod
+      (9 #\TAB)
+      (13 #\Return)
+      (27 #\Esc)
+      (32 #\Space)
+      (otherwise (code-char c)))))
 
-(defun write-at-center (string)
-  (let* ((world *world*)
-         (width (world-width world))
-         (height (world-height world))
-         (center-x (floor width 2))
-         (center-y (floor height 2))
-         (normal-x (- center-x (floor (length string) 2) )))
-    (write-string-at-point (standard-window)
-                           string
-                           normal-x
-                           center-y)))
-
-(defstruct ui 
-  render-fn keymap cursor-visible next-ui)
+(defparameter *ui-stack* '('start 'play 'win 'lose))
 
 
-(defun debugger (h w)
-  (write-at-center (format nil "h: ~a; w: ~a" h w)))
+(defun print-string (string x y)
+  (let ((h (termbox:height))
+        (w (termbox:width)))
+    (declare (ignore h w))
+    (loop for c across string do
+         (termbox:change-cell x y (char-code c )))
+    )
+  )
+
+(defparameter *inside-drogue* "yes i am inside drogue")
+(defun sw-listen ()
+  (log-debug (format nil "listening on ~a~%" 9000) )
+  (swank:create-server :port 9000 :dont-close t   ))
+
+(defun visible-debug ()
+  (log-debug (format nil "called hahaha visi-debug~%" ) )
+  (change-cell 1 1 (char-code #\#) termbox:+green+)
+  (termbox:present)
+  )
 
 
-;; (defun defui (world)
-;;   (let ((ui (make-ui)))
-;;     (setf (ui-render-fn ui))))
+(defun do-loady ()
+  (log-debug (format nil "called do-loady ~%" ) )
+  (load "load.lisp"))
 
-
-(defun run-ui (world)
-  (render-ui (world-ui world)))
-
-
-(defun game-loop (world)
-  (with-curses ()
-    (disable-echoing)
-    (enable-raw-input :interpret-control-characters t)
-    (enable-non-blocking-mode (standard-window))
-    (charms/ll:curs-set 0)
-    (init-world world)
-    (ensure-screen-size )
-    (loop
-       :named driver-loop
-       :for c := (get-char (standard-window)
-                           :ignore-error t)
-       :do (progn
-             (refresh-window (standard-window))
-             (incf (world-ticks world))
-             (write-at-center "you awake in a quiet place...")
-             ))))
-
+(defun log-bug ()
+  (log-debug (format nil "called log-bug" ) )
+  )
 
 (defun main (args)
   (declare (ignore args))
-  (game-loop *world*))
+  (sw-listen )
+  (-main)
+  )
 
-
-;; (defui start-screen (world)
-;;   :ui ;;output
-;;   :keymap ;;input
-;;   :cursor
-;;   :next ;;that way q in the keymap always can be just go-next
-;;   )
+(defun -main ()
+  (termbox:init)
+  (termbox:clear)
+  (loop named input-loop for c = (event-char (termbox:poll-event)) do
+       (case c
+         (#\Return (log-bug))
+         (#\q (return-from input-loop))
+         (#\l (visible-debug) )
+         (#\p (visible-debug) ))
+       (log-debug (format nil "~a" c )))
+  (termbox:change-cell 0 0 (char-code #\#) termbox:+green+ 0)
+  (termbox:present)
+  (termbox:shutdown))
