@@ -1,4 +1,3 @@
-;;;; drogue.lisp
 (defpackage #:drogue
   (:use #:cl
         #:termbox
@@ -12,9 +11,9 @@
 
 (defmacro log-debug (msg)
   `(with-open-file  (logfile "mylog.log"
-                        :if-exists :supersede
-                        :direction :output )
-    (format logfile "~a~%" ,msg)) )   
+                             :if-exists :supersede
+                             :direction :output )
+     (format logfile "~a~%" ,msg)) )   
 
 (defun event->keypress (event)
   (let ((type (nth 1 event))
@@ -67,22 +66,33 @@
   (log-debug (format nil "called log-bug" ) )
   )
 
+(defun handle-input (input)
+  (case input
+    (#\Return (log-bug))
+    (#\q (return-from handle-input))
+    (#\t (print-a-thing) )
+    (#\l (do-loady) )
+    (#\p (visible-debug) )))
+
+
+(defun print-a-thing ()
+  (termbox:change-cell 0 0 (char-code #\#) termbox:+green+ 0))
+
 (defun main (args)
   (declare (ignore args))
   (sw-listen )
+  (termbox:init)
   (-main)
+  (termbox:shutdown)
   )
 
 (defun -main ()
-  (termbox:init)
-  (termbox:clear)
-  (loop named input-loop for c = (event-char (termbox:poll-event)) do
-       (case c
-         (#\Return (log-bug))
-         (#\q (return-from input-loop))
-         (#\l (visible-debug) )
-         (#\p (visible-debug) ))
-       (log-debug (format nil "~a" c )))
-  (termbox:change-cell 0 0 (char-code #\#) termbox:+green+ 0)
-  (termbox:present)
-  (termbox:shutdown))
+  (loop named input-loop for event = (termbox:poll-event) do
+       (let ((c (event-char event)))
+       (termbox:clear)
+       (log-debug (format nil "~a" c ))
+       (handle-input c)
+       (termbox:present)
+         )
+       )
+  )

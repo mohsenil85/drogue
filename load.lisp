@@ -1,1 +1,1 @@
-(eval (defparameter *my-state* 8))
+(defparameter *my-state* 9)
