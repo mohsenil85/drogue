@@ -6,24 +6,16 @@
 
 (in-package #:drogue)
 
-(defstruct keypress  
+(defstruct event 
   type mod ch key)
 
-(defmacro log-debug (msg)
-  `(with-open-file  (logfile "mylog.log"
+
+(defun log-debug (msg)
+  (with-open-file  (logfile "logfile.log"
                              :if-exists :supersede
                              :direction :output )
-     (format logfile "~a~%" ,msg)) )   
+    (format logfile "~a~%" msg)) )   
 
-(defun event->keypress (event)
-  (let ((type (nth 1 event))
-        (mod (nth 3 event))
-        (ch (nth 5 event))
-        (key (nth 7 event)))
-    (make-keypress :type type
-                   :mod mod
-                   :ch ch
-                   :key key)))
 (defun event-char (event)
   (let ((c (nth 5 event))
         (mod (nth 7 event)))
@@ -34,29 +26,45 @@
       (32 #\Space)
       (otherwise (code-char c)))))
 
+(defun is-resize (event)
+  (= 2 (nth 1 event)))
+
+(defun ensure-screen-size (event)
+  (let ((w (nth 3 event))
+        (h (nth 5 event)))
+    (if (and (not (= w 130))
+                     (not (= h 40)))
+        (progn
+          (force-clear)
+          (put-string "WRONG SIZE" 0 0)
+          (put-string (format nil "H: ~a W: ~a" h w)  0 1)
+          (present)))))
+
 (defparameter *ui-stack* '('start 'play 'win 'lose))
 
 
-(defun print-string (string x y)
-  (let ((h (termbox:height))
-        (w (termbox:width)))
-    (declare (ignore h w))
-    (loop for c across string do
-         (termbox:change-cell x y (char-code c )))
-    )
-  )
-
-(defparameter *inside-drogue* "yes i am inside drogue")
 (defun sw-listen ()
   (log-debug (format nil "listening on ~a~%" 9000) )
-  (swank:create-server :port 9000 :dont-close t   ))
+  (with-open-file
+      (logfile "logfile.log" :if-exists :supersede
+               :direction :output)
+    (let ((*standard-output* logfile))
+      (swank:create-server :port 9000 :dont-close t ))))
 
 (defun visible-debug ()
   (log-debug (format nil "called hahaha visi-debug~%" ) )
   (change-cell 1 1 (char-code #\#) termbox:+green+)
-  (termbox:present)
-  )
+  (termbox:present))
 
+(defun put-string
+    (string x y &optional
+                  (fg termbox:+black+)
+                  (bg termbox:+white+) )
+  (let ((string string)
+        (accum 0))
+    (loop for c across string do
+         (change-cell  (+ x accum) y  (char-code c) fg bg )
+         (incf accum))))
 
 (defun do-loady ()
   (log-debug (format nil "called do-loady ~%" ) )
@@ -66,11 +74,23 @@
   (log-debug (format nil "called log-bug" ) )
   )
 
+(defun force-clear ()
+  (loop for i below (termbox:width) do
+       (loop for j below (termbox:height) do
+            (put-string " " i j)))
+  (termbox:present))
+
+(defparameter *running* nil)
+
 (defun handle-input (input)
   (case input
     (#\Return (log-bug))
-    (#\q (return-from handle-input))
+    (#\q (sb-ext:exit))
     (#\t (print-a-thing) )
+    (#\c (progn
+           (termbox:clear)
+           (termbox:present)))
+    (#\s (put-string "no you" 0 4))
     (#\l (do-loady) )
     (#\p (visible-debug) )))
 
@@ -80,19 +100,23 @@
 
 (defun main (args)
   (declare (ignore args))
+  (setf *running* t)
   (sw-listen )
   (termbox:init)
   (-main)
-  (termbox:shutdown)
-  )
+  (termbox:shutdown))
+
 
 (defun -main ()
-  (loop named input-loop for event = (termbox:poll-event) do
-       (let ((c (event-char event)))
-       (termbox:clear)
-       (log-debug (format nil "~a" c ))
-       (handle-input c)
-       (termbox:present)
-         )
-       )
-  )
+  (loop while *running* for event = (termbox:poll-event) do
+       (let ((width (termbox:width))
+             (height (termbox:height))
+             (c (event-char event)))
+         (log-debug (format nil "~a" event))
+         (log-debug (format nil "~a" c ))
+         (log-debug (format nil "~a" height ))
+         (log-debug (format nil "~a" width ))
+         (if (is-resize event)
+             (ensure-screen-size event)
+             (handle-input c))
+         )))

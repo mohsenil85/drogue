@@ -5,6 +5,7 @@
   :author "lmohseni <mohsenil85@gmail.com>"
   :license "Specify license here"
   :depends-on (#:cl-termbox
-               #:swank)
+               #:swank
+               #:log4cl)
   :serial t
   :components ((:file "drogue")))
