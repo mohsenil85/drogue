@@ -1,122 +1,52 @@
 (defpackage #:drogue
   (:use #:cl
-        #:termbox
-        #:swank)
+        #:cl-charms
+        #:drogue-ui)
+  (:import-from #:swank
+                :set-package
+                :create-server
+                :*log-output*
+                :*log-events*)
   (:export :main))
 
 (in-package #:drogue)
 
-(defstruct event 
-  type mod ch key)
-
-
-(defun log-debug (msg)
-  (with-open-file  (logfile "logfile.log"
-                             :if-exists :supersede
-                             :direction :output )
-    (format logfile "~a~%" msg)) )   
-
-(defun event-char (event)
-  (let ((c (nth 5 event))
-        (mod (nth 7 event)))
-    (case mod
-      (9 #\TAB)
-      (13 #\Return)
-      (27 #\Esc)
-      (32 #\Space)
-      (otherwise (code-char c)))))
-
-(defun is-resize (event)
-  (= 2 (nth 1 event)))
-
-(defun ensure-screen-size (event)
-  (let ((w (nth 3 event))
-        (h (nth 5 event)))
-    (if (and (not (= w 130))
-                     (not (= h 40)))
-        (progn
-          (force-clear)
-          (put-string "WRONG SIZE" 0 0)
-          (put-string (format nil "H: ~a W: ~a" h w)  0 1)
-          (present)))))
-
-(defparameter *ui-stack* '('start 'play 'win 'lose))
-
-
-(defun sw-listen ()
-  (log-debug (format nil "listening on ~a~%" 9000) )
+(defun log-to-file (msg)
   (with-open-file
-      (logfile "logfile.log" :if-exists :supersede
-               :direction :output)
-    (let ((*standard-output* logfile))
-      (swank:create-server :port 9000 :dont-close t ))))
+      (log "logfile.log"
+           :direction :output
+           :if-exists :supersede)
+    (format log "~a~%" msg)))
 
-(defun visible-debug ()
-  (log-debug (format nil "called hahaha visi-debug~%" ) )
-  (change-cell 1 1 (char-code #\#) termbox:+green+)
-  (termbox:present))
+(defun swank-init ()
+  (swank:set-package 'drogue)
+  (swank:create-server :port 9000 :dont-close t))
 
-(defun put-string
-    (string x y &optional
-                  (fg termbox:+black+)
-                  (bg termbox:+white+) )
-  (let ((string string)
-        (accum 0))
-    (loop for c across string do
-         (change-cell  (+ x accum) y  (char-code c) fg bg )
-         (incf accum))))
+(defun handle-resize ()
+  (loop while (is-resize (get-char (standard-window)))
+     do
+       (format *terminal-io* "NO RESIZING ALLOWED!")
+       (force-output *terminal-io*))
+  (sb-ext:exit ))
 
-(defun do-loady ()
-  (log-debug (format nil "called do-loady ~%" ) )
-  (load "load.lisp"))
-
-(defun log-bug ()
-  (log-debug (format nil "called log-bug" ) )
-  )
-
-(defun force-clear ()
-  (loop for i below (termbox:width) do
-       (loop for j below (termbox:height) do
-            (put-string " " i j)))
-  (termbox:present))
-
-(defparameter *running* nil)
+(defun is-resize (input)
+  (eq (char-code input) 410))
 
 (defun handle-input (input)
-  (case input
-    (#\Return (log-bug))
-    (#\q (sb-ext:exit))
-    (#\t (print-a-thing) )
-    (#\c (progn
-           (termbox:clear)
-           (termbox:present)))
-    (#\s (put-string "no you" 0 4))
-    (#\l (do-loady) )
-    (#\p (visible-debug) )))
-
-
-(defun print-a-thing ()
-  (termbox:change-cell 0 0 (char-code #\#) termbox:+green+ 0))
+  (log-to-file (format nil "got a char ~a~% " input ))
+  (charms:write-string-at-point 
+               (charms:standard-window)
+               (string input)
+               (random 10)
+               (random 10)))
 
 (defun main (args)
   (declare (ignore args))
-  (setf *running* t)
-  (sw-listen )
-  (termbox:init)
-  (-main)
-  (termbox:shutdown))
-
-
-(defun -main ()
-  (loop while *running* for event = (termbox:poll-event) do
-       (let ((width (termbox:width))
-             (height (termbox:height))
-             (c (event-char event)))
-         (log-debug (format nil "~a" event))
-         (log-debug (format nil "~a" c ))
-         (log-debug (format nil "~a" height ))
-         (log-debug (format nil "~a" width ))
-         (if (is-resize event)
-             (ensure-screen-size event)
-             (handle-input c))
-         )))
+  (swank-init)
+  (charms:with-curses ()
+    (log-to-file "i am working...")
+    (loop for input = (charms:get-char
+                       (charms:standard-window) :ignore-error t) do
+         (if (is-resize input )
+             (handle-resize)
+             (handle-input input)))))
