@@ -7,5 +7,7 @@
   :depends-on (#:cl-charms
                #:swank)
   :serial t
-  :components ((:file "ui")
+  :components ((:file "package")
+               (:file "utils")
+               (:file "ui")
                (:file "drogue")))
