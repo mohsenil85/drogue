@@ -1,3 +1,13 @@
+
+(in-package :cl-user)
+(defpackage #:drogue-utils
+  (:nicknames utils)
+  (:use #:cl
+        #:cl-charms)
+  (:export :log-to-file
+           :handle-resize
+           :is-resize))
+
 (in-package #:drogue-utils)
 
 (defun log-to-file (msg)

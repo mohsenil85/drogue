@@ -1,12 +1,21 @@
+(defpackage #:drogue
+  (:use #:cl
+        #:cl-charms
+        #:drogue-ui
+        #:drogue-utils)
+  (:import-from #:swank
+                #:set-package
+                #:create-server
+                #:*log-output*
+                #:*log-events*)
+  (:export #:main))
 (in-package #:drogue)
 
 (defparameter *running* nil )
 
 (defun swank-init ()
   (swank:set-package 'drogue)
-  (swank:create-server :port 9000
-                       :dont-close t
-                       :style :spawn))
+  (swank:create-server :port 9000 :dont-close t))
 
 (defparameter *default-ui* (make-instance 'drogue-ui:<ui>))
 (defparameter *ui-stack* (cons *default-ui* '()))
@@ -17,8 +26,7 @@
          (loop for j from starty below h do
               (charms:write-string-at-point
                win
-               "*" i j)))
-    (charms:refresh-window win)))
+               "*" i j)))))
 
 
 (defun main (args)
