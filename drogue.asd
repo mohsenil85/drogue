@@ -14,10 +14,10 @@
   :serial t
   :components ((:module "src"
                         :components
-                        (:file "package")
-                        (:file "utils")
-                        (:file "ui")
-                        (:file "drogue")))
+                        ((:file "package")
+                         (:file "utils")
+                         (:file "ui")
+                         (:file "drogue"))))
   :long-description
   #.(with-open-file (stream (merge-pathnames
                              #p"README.markdown"

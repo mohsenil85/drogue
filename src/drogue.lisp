@@ -15,42 +15,35 @@
 
 (defun swank-init ()
   (swank:set-package 'drogue)
-  (swank:create-server :port 9000 :dont-close t))
+  (swank:create-server :port 9000 :style :spawn))
 
-(defparameter *default-ui* (make-instance 'drogue-ui:<ui>))
+(defparameter *debug-ui* (make-instance 'drogue-ui:<ui>))
 (defparameter *ui-stack* (cons *default-ui* '()))
+(defun init-world ()
+  (setf (get 'world 'ticks) 0))
 
-(defun print-box (startx starty w h)
-  (let ((win (standard-window)))
-    (loop for i from startx below w do
-         (loop for j from starty below h do
-              (charms:write-string-at-point
-               win
-               "*" i j)))))
+(defmethod handle-input (<ui> input)
+  :before
+  (if (utils:is-resize input)
+      (utils:handle-resize)
+      (call-next-method  )))
+
+(defmethod should-loop (<ui>)
+  t)
+
+(defun run-ui (ui)
+  (render-ui ui)
+  (loop
+     while (should-loop ui)
+     for input = (charms:get-char (standard-window) :ignore-error t)
+     do (handle-input ui input)))
 
 
 (defun main (args)
   (declare (ignore args))
   (swank-init)
-  (charms:with-curses ()
-    (setf *running* t)
-    (charms/ll:curs-set 0)
-    (charms:disable-echoing)
-    (charms:enable-raw-input :interpret-control-characters t)
+  (utils:with-init
+    (init-world)
     (utils:log-to-file "i am working...")
-    (loop
-       while *running*
-       with ui = (car *ui-stack*)
-       with win = (standard-window)
-       for input = (charms:get-char win
-                    :ignore-error t)
-         
-       do
-         (progn
-           (ui:render-ui ui)
-           (charms:refresh-window win )
-           (if (utils:is-resize input)
-               (utils:handle-resize)
-               (ui:handle-input ui input))
-           (utils:log-to-file "end of loop"))
-         )))
+    (run-ui *debug-ui*)
+    ))
