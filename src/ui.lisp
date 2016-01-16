@@ -4,6 +4,7 @@
         #:utils)
   (:export :<ui>
            :<debug-ui>
+           :<play-ui>
            :render-ui
            :handle-input
            :run-ui)
@@ -28,9 +29,7 @@
 (defmethod handle-input ((ui <play-ui>) input)
   (case input
     (#\newline (print-box 20 20 20 20))
-    (#\q (switch-ui *debug-ui*))
-    )
-  )
+    (#\q (switch-ui drogue::*debug-ui* *play-ui*))))
 
 (defparameter *play-ui* (make-instance 'drogue-ui:<play-ui>))
 
@@ -66,7 +65,7 @@
     (#\newline (print-box 20 20 20 20))
     (#\q (setf (should-loop ui) nil) )
     (#\l (swank-listen) )
-    (#\p (switch-ui *play-ui*) )
+    (#\p (switch-ui *play-ui* drogue::*debug-ui*) )
     (#\k (swank-kill) )
     (#\r (ui:render-ui ui))
     (otherwise (utils:log-to-file "got here to end of input"))))

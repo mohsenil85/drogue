@@ -51,8 +51,8 @@
         (offset (floor (length string) 2)))
     (multiple-value-bind (w h) (window-dimensions win)
       (write-string-at-point win string
-                             (floor (- w offset) 2 )
-                             (floor (+ h plus-y) 2 ) )))) 
+                             (- (floor w  2 ) offset)
+                             (+ (floor h  2 ) plus-y) )))) 
 
 
 (defun log-to-file (msg)
