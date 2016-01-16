@@ -3,11 +3,6 @@
         #:cl-charms
         #:drogue-ui
         #:drogue-utils)
-  (:import-from #:swank
-                #:set-package
-                #:create-server
-                #:*log-output*
-                #:*log-events*)
   (:export #:main))
 (in-package #:drogue)
 

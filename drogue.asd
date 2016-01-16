@@ -14,7 +14,7 @@
   :serial t
   :components ((:module "src"
                         :components
-                        ((:file "package")
+                        ((:file "swank-server")
                          (:file "utils")
                          (:file "ui")
                          (:file "drogue"))))

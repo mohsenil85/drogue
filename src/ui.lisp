@@ -1,7 +1,8 @@
 (defpackage #:drogue-ui
   (:nicknames ui)
   (:use #:cl
-        #:utils)
+        #:utils
+        #:swank-server)
   (:export :<ui>
            :<debug-ui>
            :<play-ui>
@@ -49,8 +50,8 @@
   (print-center "c to clear screen" 0)
   (print-center "enter to do a thing" 5)
   (print-center (format nil "debug output: height: ~a width: ~a" *height* *width*) 8)
-  (print-center (format nil "swank ~a" (is-swank-running)) 10)
-  (print-center (format nil "connected ~a" (is-swank-connected)) 12)
+  (print-center (format nil "swank ~a" (swank-server:is-swank-running)) 10)
+  (print-center (format nil "connected ~a" (swank-server:is-swank-connected)) 12)
   )
 
 (defun print-test ()
@@ -62,11 +63,15 @@
   (utils:log-to-file (format nil "got a char ~a~% " input ))
   (case input
     (#\c (charms:clear-window (standard-window) :force-repaint t) )
-    (#\newline (print-box 20 20 20 20))
+    (#\newline (print-box
+                (random 10)
+                (random 10)
+                (random (- *width* 10))
+                (random (- *height* 10))))
     (#\q (setf (should-loop ui) nil) )
-    (#\l (swank-listen) )
+    (#\l (swank-server:swank-listen) )
     (#\p (switch-ui *play-ui* drogue::*debug-ui*) )
-    (#\k (swank-kill) )
+    (#\k (swank-server:swank-kill) )
     (#\r (ui:render-ui ui))
     (otherwise (utils:log-to-file "got here to end of input"))))
 
