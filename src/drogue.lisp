@@ -9,7 +9,6 @@
 (defparameter *running* nil )
 
 
-(defparameter *debug-ui* (make-instance 'drogue-ui:<debug-ui>))
 
 (defun init-world ()
   (setf (get 'world 'ticks) 0))

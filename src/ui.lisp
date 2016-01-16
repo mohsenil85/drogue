@@ -1,17 +1,21 @@
 (defpackage #:drogue-ui
   (:nicknames ui)
   (:use #:cl
-        #:utils
-        #:swank-server)
+        #:utils)
   (:export :<ui>
            :<debug-ui>
+           :*debug-ui*
            :<play-ui>
            :render-ui
            :handle-input
            :run-ui)
   (:import-from #:cl-charms
                 #:standard-window
-                #:write-string-at-point))
+                #:write-string-at-point)
+  (:import-from #:swank-server
+                #:is-swank-running
+                )
+  )
 
 (in-package #:drogue-ui)
 
@@ -33,6 +37,7 @@
     (#\q (switch-ui drogue::*debug-ui* *play-ui*))))
 
 (defparameter *play-ui* (make-instance 'drogue-ui:<play-ui>))
+(defparameter *debug-ui* (make-instance 'drogue-ui:<debug-ui>))
 
 (defgeneric render-ui (<ui>))
 (defgeneric handle-input  (<ui> input))

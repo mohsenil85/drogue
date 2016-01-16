@@ -1,15 +1,16 @@
 (in-package :cl-user)
 (defpackage #:swank-server
-  (:use #:cl)
+  (:use #:cl
+        #:utils)
   (:import-from #:swank
                 #:set-package
                 #:create-server
                 #:*log-output*
                 #:*log-events*)
-  (:export :swank-listen
-           :is-swank-running
-           :is-swank-connected
-           :swank-kill))
+  (:export #:swank-listen
+           #:is-swank-running
+           #:is-swank-connected
+           #:swank-kill))
 
 
 (defun swank-init ()
