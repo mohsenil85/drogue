@@ -8,7 +8,9 @@
            :*debug-ui*
            :<play-ui>
            :render-ui
+           :define-ui-stack
            :handle-input
+           :run-game
            :run-ui)
   (:import-from #:cl-charms
                 #:standard-window
@@ -17,39 +19,23 @@
 (in-package #:drogue-ui)
 
 (defclass <ui> ()
-  ((next :accessor next-ui :type <ui>)
-   (should-loop :accessor should-loop :initform t :type :bool)))
+  ((should-loop :accessor should-loop :initform t :type :bool)))
 
-(defmethod next-ui :before (<ui>)
-  (when (null <ui>))
-  )
 
-(defclass <debug-ui> (<ui>)
-  ())
+(defclass <debug-ui> (<ui>) ())
+(defclass <quit-ui> (<ui>) ())
 
 (defclass <play-ui> (<ui>)
   (world ))
 
-(defparameter *logo1* '(
-                        
-"     _____        _____           _____          _____     ____   ____      ______   "
-" ___|\\    \\   ___|\\    \\     ____|\\    \\     ___|\\    \\   |    | |    | ___|\\     \\  "
-"|    |\\    \\ |    |\\    \\   /     /\\    \\   /    /\\    \\  |    | |    ||     \\     \\ "
-"|    | |    ||    | |    | /     /  \\    \\ |    |  |____| |    | |    ||     ,_____/|"
-"|    | |    ||    |/____/ |     |    |    ||    |    ____ |    | |    ||     \\--'\\_|/"
-"|    | |    ||    |\\    \\ |     |    |    ||    |   |    ||    | |    ||     /___/|  "
-"|    | |    ||    | |    ||\\     \\  /    /||    |   |_,  ||    | |    ||     \\____|\\ "
-"|____|/____/||____| |____|| \\_____\\/____/ ||\\ ___\\___/  /||\\___\\_|____||____ '     /|"
-"|    /    | ||    | |    | \\ |    ||    | /| |   /____ / || |    |    ||    /_____/ |"
-"|____|____|/ |____| |____|  \\|____||____|/  \\|___|    | /  \\|____|____||____|     | /"
-"                                                 |____|/                    |_____|/ "
-
-                                                 
-
-                        ))
+(defparameter *logo1* '("     _____        _____           _____          _____     ____   ____      ______   " " ___|\\    \\   ___|\\    \\     ____|\\    \\     ___|\\    \\   |    | |    | ___|\\     \\  " "|    |\\    \\ |    |\\    \\   /     /\\    \\   /    /\\    \\  |    | |    ||     \\     \\ " "|    | |    ||    | |    | /     /  \\    \\ |    |  |____| |    | |    ||     ,_____/|" "|    | |    ||    |/____/ |     |    |    ||    |    ____ |    | |    ||     \\--'\\_|/" "|    | |    ||    |\\    \\ |     |    |    ||    |   |    ||    | |    ||     /___/|  " "|    | |    ||    | |    ||\\     \\  /    /||    |   |_,  ||    | |    ||     \\____|\\ " "|____|/____/||____| |____|| \\_____\\/____/ ||\\ ___\\___/  /||\\___\\_|____||____ '     /|" "|    /    | ||    | |    | \\ |    ||    | /| |   /____ / || |    |    ||    /_____/ |" "|____|____|/ |____| |____|  \\|____||____|/  \\|___|    | /  \\|____|____||____|     | /" "                                                 |____|/                    |_____|/ "))
 
 (defmethod render-ui ((ui <play-ui>))
   (print-logo *logo1*))
+
+
+(defmethod render-ui ((ui <quit-ui>))
+  (print-center "lol"))
 
 (defun print-logo (logo)
   (loop
@@ -59,17 +45,24 @@
        (print-center l i)
        (decf i)))
 
-(defmethod handle-input ((ui <play-ui>) input)
+(defmethod handle-input ((ui <ui>) input)
   (case input
     (#\newline (print-box 20 20 20 20))
-    (#\q (switch-ui *play-ui* *debug-ui* ))))
+    (#\q (setf (should-loop ui) nil ))))
 
-(defparameter *play-ui* (make-instance 'drogue-ui:<play-ui>))
-(defparameter *debug-ui* (make-instance 'drogue-ui:<debug-ui>))
+(defparameter *play-ui* (make-instance '<play-ui>))
+(defparameter *debug-ui* (make-instance '<debug-ui>))
+(defparameter *quit-ui* (make-instance '<quit-ui>))
+(defparameter *ui-stack* '())
+
+
+(defun define-ui-stack () 
+  (push *quit-ui* *ui-stack*)
+  (push *debug-ui* *ui-stack*)
+  (push *play-ui* *ui-stack*))
 
 (defgeneric render-ui (<ui>))
 (defgeneric handle-input  (<ui> input))
-(defgeneric next-ui (<ui>))
 
 (defmethod render-ui :after (<ui>)
   (charms:refresh-window (standard-window)))
@@ -84,8 +77,7 @@
   (print-center "enter to do a thing" 5)
   (print-center (format nil "debug output: height: ~a width: ~a" *height* *width*) 8)
   (print-center (format nil "swank ~a" (swank-server:is-swank-running)) 10)
-  (print-center (format nil "connected ~a" (swank-server:is-swank-connected)) 12)
-  )
+  (print-center (format nil "connected ~a" (swank-server:is-swank-connected)) 12))
 
 (defun print-test ()
   (write-string-at-point
@@ -96,14 +88,11 @@
   (utils:log-to-file (format nil "got a char ~a~% " input ))
   (case input
     (#\c (charms:clear-window (standard-window) :force-repaint t) )
-    (#\newline (print-box
-                (random 10)
-                (random 10)
-                (random (- *width* 10))
-                (random (- *height* 10))))
     (#\q (setf (should-loop ui) nil) )
+    (#\Q (setf utils:*running*  nil) )
     (#\l (swank-server:swank-listen) )
-    (#\p (switch-ui *debug-ui* *play-ui* ) )
+    (#\p (define-ui-stack) )
+    (#\o (run-game) )
     (#\k (swank-server:swank-kill) )
     (#\r (ui:render-ui ui))
     (otherwise (utils:log-to-file "got here to end of input"))))
@@ -118,9 +107,17 @@
 (defmethod switch-ui ((old <ui>) (new <ui>) )
   (setf (should-loop old) nil)
   (setf (next-ui old) new)
-  (setf (should-loop new) t)
-  (run-ui new))
+  (setf (should-loop new) t))
 
+(defmethod run-ui :after ((ui <ui>))
+  (charms:clear-window (standard-window) :force-repaint t))
+
+
+(defun pop-ui-stack ()
+  (pop *ui-stack*))
+
+(defun run-game ()
+  (mapcar #'run-ui *ui-stack*))
 
 (defmethod run-ui ((ui <ui>))
   (render-ui ui)
@@ -132,5 +129,5 @@
        (render-ui ui)
        (log-to-file "end loop")
      finally 
-       (run-ui (next-ui ui))
+       (pop-ui-stack )
        ))

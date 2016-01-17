@@ -11,6 +11,7 @@
            :print-box
            :*width*
            :*height*
+           :*running*
            ))
 
 (in-package #:drogue-utils)
@@ -26,6 +27,7 @@
 
 (defparameter *width* 0)
 (defparameter *height* 0)
+(defparameter *running* nil )
 
 (defun set-width-and-height ()
   (multiple-value-bind (w h) (window-dimensions (standard-window))
@@ -35,6 +37,7 @@
 (defmacro with-init (&body body)
   `(progn
      (charms:with-curses ()
+       (setf *running* t)
        (set-width-and-height)
        (charms/ll:curs-set 0)
        (charms:disable-echoing)

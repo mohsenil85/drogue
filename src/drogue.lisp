@@ -6,7 +6,6 @@
   (:export #:run))
 (in-package #:drogue)
 
-(defparameter *running* nil )
 
 (defun init-world ()
   (setf (get 'world 'ticks) 0))
@@ -16,4 +15,7 @@
   (utils:with-init
     (init-world)
     (utils:log-to-file "i am working...")
-    (run-ui *debug-ui*)))
+    (define-ui-stack)
+    (utils:log-to-file "ui stack is defined")
+    (when utils:*running*
+      (run-game))))
