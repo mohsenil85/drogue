@@ -17,7 +17,12 @@
 (in-package #:drogue-ui)
 
 (defclass <ui> ()
-  ((should-loop :accessor should-loop :initform t :type :bool)))
+  ((next :accessor next-ui :type <ui>)
+   (should-loop :accessor should-loop :initform t :type :bool)))
+
+(defmethod next-ui :before (<ui>)
+  (when (null <ui>))
+  )
 
 (defclass <debug-ui> (<ui>)
   ())
@@ -25,13 +30,39 @@
 (defclass <play-ui> (<ui>)
   (world ))
 
+(defparameter *logo1* '(
+                        
+"     _____        _____           _____          _____     ____   ____      ______   "
+" ___|\\    \\   ___|\\    \\     ____|\\    \\     ___|\\    \\   |    | |    | ___|\\     \\  "
+"|    |\\    \\ |    |\\    \\   /     /\\    \\   /    /\\    \\  |    | |    ||     \\     \\ "
+"|    | |    ||    | |    | /     /  \\    \\ |    |  |____| |    | |    ||     ,_____/|"
+"|    | |    ||    |/____/ |     |    |    ||    |    ____ |    | |    ||     \\--'\\_|/"
+"|    | |    ||    |\\    \\ |     |    |    ||    |   |    ||    | |    ||     /___/|  "
+"|    | |    ||    | |    ||\\     \\  /    /||    |   |_,  ||    | |    ||     \\____|\\ "
+"|____|/____/||____| |____|| \\_____\\/____/ ||\\ ___\\___/  /||\\___\\_|____||____ '     /|"
+"|    /    | ||    | |    | \\ |    ||    | /| |   /____ / || |    |    ||    /_____/ |"
+"|____|____|/ |____| |____|  \\|____||____|/  \\|___|    | /  \\|____|____||____|     | /"
+"                                                 |____|/                    |_____|/ "
+
+                                                 
+
+                        ))
+
 (defmethod render-ui ((ui <play-ui>))
-  (print-center "you awake in a quiet place..."))
+  (print-logo *logo1*))
+
+(defun print-logo (logo)
+  (loop
+     for l in (reverse logo)
+     with i = 0
+     do
+       (print-center l i)
+       (decf i)))
 
 (defmethod handle-input ((ui <play-ui>) input)
   (case input
     (#\newline (print-box 20 20 20 20))
-    (#\q (switch-ui drogue::*debug-ui* *play-ui*))))
+    (#\q (switch-ui *play-ui* *debug-ui* ))))
 
 (defparameter *play-ui* (make-instance 'drogue-ui:<play-ui>))
 (defparameter *debug-ui* (make-instance 'drogue-ui:<debug-ui>))
@@ -72,7 +103,7 @@
                 (random (- *height* 10))))
     (#\q (setf (should-loop ui) nil) )
     (#\l (swank-server:swank-listen) )
-    (#\p (switch-ui *play-ui* drogue::*debug-ui*) )
+    (#\p (switch-ui *debug-ui* *play-ui* ) )
     (#\k (swank-server:swank-kill) )
     (#\r (ui:render-ui ui))
     (otherwise (utils:log-to-file "got here to end of input"))))
@@ -86,6 +117,7 @@
 
 (defmethod switch-ui ((old <ui>) (new <ui>) )
   (setf (should-loop old) nil)
+  (setf (next-ui old) new)
   (setf (should-loop new) t)
   (run-ui new))
 
@@ -98,4 +130,7 @@
      do
        (handle-input ui input)
        (render-ui ui)
-       (log-to-file "end loop")))
+       (log-to-file "end loop")
+     finally 
+       (run-ui (next-ui ui))
+       ))

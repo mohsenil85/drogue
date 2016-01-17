@@ -10,3 +10,5 @@ manifest
 .#*
 *.log
 *.swp
+/drogue
+/logo.txt

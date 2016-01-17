@@ -3,18 +3,15 @@
         #:cl-charms
         #:drogue-ui
         #:drogue-utils)
-  (:export #:main))
+  (:export #:run))
 (in-package #:drogue)
 
 (defparameter *running* nil )
 
-
-
 (defun init-world ()
   (setf (get 'world 'ticks) 0))
 
-
-(defun main (args)
+(defun run (args)
   (declare (ignore args))
   (utils:with-init
     (init-world)

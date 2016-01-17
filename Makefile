@@ -3,8 +3,8 @@ all: manifest
 		--manifest-file manifest \
 		--load-system swank \
 		--load-system drogue \
-		--output out \
-		--entry drogue:main \
+		--output drogue \
+		--entry drogue:run \
 		--compress-core \
 
 manifest:
