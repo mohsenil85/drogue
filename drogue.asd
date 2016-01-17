@@ -14,8 +14,8 @@
   :serial t
   :components ((:module "src"
                         :components
-                        ((:file "swank-server")
-                         (:file "utils")
+                        ((:file "utils")
+                         (:file "swank-server")
                          (:file "ui")
                          (:file "drogue"))))
   :long-description

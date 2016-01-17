@@ -1,7 +1,8 @@
 (defpackage #:drogue-ui
   (:nicknames ui)
   (:use #:cl
-        #:utils)
+        #:utils
+        #:swank-server)
   (:export :<ui>
            :<debug-ui>
            :*debug-ui*
@@ -11,11 +12,7 @@
            :run-ui)
   (:import-from #:cl-charms
                 #:standard-window
-                #:write-string-at-point)
-  (:import-from #:swank-server
-                #:is-swank-running
-                )
-  )
+                #:write-string-at-point))
 
 (in-package #:drogue-ui)
 
