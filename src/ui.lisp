@@ -6,9 +6,8 @@
   (:export :<ui>
            :<debug-ui>
            :*debug-ui*
-           :<play-ui>
+           :<logo-ui>
            :render-ui
-           :define-ui-stack
            :handle-input
            :run-game
            :run-ui)
@@ -23,43 +22,47 @@
 
 
 (defclass <debug-ui> (<ui>) ())
-(defclass <quit-ui> (<ui>) ())
+(defclass <press-any-key> (<ui>) ())
+(defclass <quit-ui> (<press-any-key>) ())
 
-(defclass <play-ui> (<ui>)
+(defclass <sub-ui> (<press-any-key>) ())
+
+(defclass <logo-ui> (<press-any-key>)
   (world ))
 
-(defparameter *logo1* '("     _____        _____           _____          _____     ____   ____      ______   " " ___|\\    \\   ___|\\    \\     ____|\\    \\     ___|\\    \\   |    | |    | ___|\\     \\  " "|    |\\    \\ |    |\\    \\   /     /\\    \\   /    /\\    \\  |    | |    ||     \\     \\ " "|    | |    ||    | |    | /     /  \\    \\ |    |  |____| |    | |    ||     ,_____/|" "|    | |    ||    |/____/ |     |    |    ||    |    ____ |    | |    ||     \\--'\\_|/" "|    | |    ||    |\\    \\ |     |    |    ||    |   |    ||    | |    ||     /___/|  " "|    | |    ||    | |    ||\\     \\  /    /||    |   |_,  ||    | |    ||     \\____|\\ " "|____|/____/||____| |____|| \\_____\\/____/ ||\\ ___\\___/  /||\\___\\_|____||____ '     /|" "|    /    | ||    | |    | \\ |    ||    | /| |   /____ / || |    |    ||    /_____/ |" "|____|____|/ |____| |____|  \\|____||____|/  \\|___|    | /  \\|____|____||____|     | /" "                                                 |____|/                    |_____|/ "))
+(defclass <middle-ui> (<press-any-key>)
+  (world ))
 
-(defmethod render-ui ((ui <play-ui>))
-  (print-logo *logo1*))
+(defmethod render-ui ((ui <middle-ui>))
+  (print-center "i am the middle ui"))
 
+(defmethod render-ui ((ui <logo-ui>))
+  (print-logo))
+
+(defmethod render-ui ((ui <sub-ui>))
+  (print-center "i am the sub ui, press any key to exit"))
+
+(defmethod handle-input :before ((ui <press-any-key>) input)
+  (log-to-file "handle-input after called")
+  (case input
+    (t (pop-ui-stack))))
 
 (defmethod render-ui ((ui <quit-ui>))
   (print-center "lol"))
 
-(defun print-logo (logo)
-  (loop
-     for l in (reverse logo)
-     with i = 0
-     do
-       (print-center l i)
-       (decf i)))
 
 (defmethod handle-input ((ui <ui>) input)
   (case input
     (#\newline (print-box 20 20 20 20))
+    (#\c (setf *running* nil))
     (#\q (setf (should-loop ui) nil ))))
 
-(defparameter *play-ui* (make-instance '<play-ui>))
+(defparameter *logo-ui* (make-instance '<logo-ui>))
 (defparameter *debug-ui* (make-instance '<debug-ui>))
+(defparameter *middle-ui* (make-instance '<middle-ui>))
 (defparameter *quit-ui* (make-instance '<quit-ui>))
 (defparameter *ui-stack* '())
 
-
-(defun define-ui-stack () 
-  (push *quit-ui* *ui-stack*)
-  (push *debug-ui* *ui-stack*)
-  (push *play-ui* *ui-stack*))
 
 (defgeneric render-ui (<ui>))
 (defgeneric handle-input  (<ui> input))
@@ -84,12 +87,20 @@
    (standard-window)
    "haha" (random *width*) (random *height*)))
 
+
+(defun define-ui-stack ()
+  (setf *running* t)
+  (push *quit-ui* *ui-stack*)
+  (push *middle-ui* *ui-stack*)
+  (push *logo-ui* *ui-stack*))
+
 (defmethod handle-input ((ui <debug-ui>)  input )
   (utils:log-to-file (format nil "got a char ~a~% " input ))
   (case input
     (#\c (charms:clear-window (standard-window) :force-repaint t) )
     (#\q (setf (should-loop ui) nil) )
     (#\Q (setf utils:*running*  nil) )
+    (#\S (setf utils:*running*  t) )
     (#\l (swank-server:swank-listen) )
     (#\p (define-ui-stack) )
     (#\o (run-game) )
@@ -106,7 +117,6 @@
 
 (defmethod switch-ui ((old <ui>) (new <ui>) )
   (setf (should-loop old) nil)
-  (setf (next-ui old) new)
   (setf (should-loop new) t))
 
 (defmethod run-ui :after ((ui <ui>))

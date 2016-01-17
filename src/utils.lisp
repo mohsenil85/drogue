@@ -9,6 +9,7 @@
            :is-resize
            :with-init
            :print-box
+           :print-logo
            :*width*
            :*height*
            :*running*
@@ -29,6 +30,28 @@
 (defparameter *height* 0)
 (defparameter *running* nil )
 
+(defparameter *logo* '(
+                       
+":::::::::  :::::::::   ::::::::   ::::::::  :::    ::: ::::::::::"
+":+:    :+: :+:    :+: :+:    :+: :+:    :+: :+:    :+: :+:       "
+"+:+    +:+ +:+    +:+ +:+    +:+ +:+        +:+    +:+ +:+       "
+"+#+    +:+ +#++:++#:  +#+    +:+ :#:        +#+    +:+ +#++:++#  "
+"+#+    +#+ +#+    +#+ +#+    +#+ +#+   +#+# +#+    +#+ +#+       "
+"#+#    #+# #+#    #+# #+#    #+# #+#    #+# #+#    #+# #+#       "
+"#########  ###    ###  ########   ########   ########  ##########"
+
+                       ))
+
+
+(defun print-logo (&optional (logo *logo*))
+  (loop
+     for l in (reverse logo)
+     with i = 0
+     do
+       (print-center l i)
+       (decf i)))
+
+
 (defun set-width-and-height ()
   (multiple-value-bind (w h) (window-dimensions (standard-window))
     (setq *width* w)
@@ -37,7 +60,6 @@
 (defmacro with-init (&body body)
   `(progn
      (charms:with-curses ()
-       (setf *running* t)
        (set-width-and-height)
        (charms/ll:curs-set 0)
        (charms:disable-echoing)

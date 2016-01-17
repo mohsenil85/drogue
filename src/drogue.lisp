@@ -15,7 +15,8 @@
   (utils:with-init
     (init-world)
     (utils:log-to-file "i am working...")
-    (define-ui-stack)
     (utils:log-to-file "ui stack is defined")
-    (when utils:*running*
-      (run-game))))
+    (if utils:*running*
+        (run-game)
+        (run-ui (make-instance '<debug-ui> ))
+        )))
